@@ -35,7 +35,7 @@ module.exports = {
 
             const data = await response.json();
 
-            console.log(data);
+            //console.log(data);
 
             const translated = data.message.result.translatedText;
 

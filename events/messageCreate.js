@@ -27,6 +27,7 @@ module.exports = {
         if(!text) return;
         if(text.startsWith("http")) return;
         if(text.startsWith("/")) return;
+        if(text.startsWith("<:")) return;
 
         try {
 

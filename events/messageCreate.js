@@ -71,7 +71,7 @@ module.exports = {
 
             const translated = datas.message.result.translatedText;
 
-            await message.channel.send(`${text} >> ${translated}`);
+            await message.reply(`${translated}`);
 
         } catch(error) {
             console.error(error);

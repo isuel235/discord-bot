@@ -4,5 +4,7 @@
     "GUILD_ID" : "YOUR_GUILD_ID",
 
     "X_NAVER_CLIENT_ID" : "YOUR_N_CLIENT_ID",
-    "X_NAVER_CLIENT_SECRET" : "YOUR_N_CLIENT_SEC"
+    "X_NAVER_CLIENT_SECRET" : "YOUR_N_CLIENT_SEC",
+
+    "translateChannels" : {}
 }

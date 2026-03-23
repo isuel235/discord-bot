@@ -58,7 +58,7 @@ for (const file of eventFiles) {
     }
 }
 
-client.on("clientReady", ()=> {
+client.once("clientReady", ()=> {
 	console.log(`Logged in as ${client.user.tag}`);
 	manager.init(client.user.id);
 });

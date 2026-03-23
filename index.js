@@ -63,4 +63,16 @@ client.on("ready", ()=> {
 	manager.init(client.user.id);
 });
 
+manager.on("nodeConnect", node => {
+    console.log("✅ Lavalink connected:", node.id);
+});
+
+manager.on("nodeDisconnect", (node) => {
+    console.log("❌ Lavalink disconnected:", node.id);
+});
+
+manager.on("nodeError", (node, error) => {
+    console.log("💥 Lavalink error:", error.message);
+});
+
 client.login(DISCORD_API);

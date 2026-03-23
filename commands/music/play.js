@@ -21,7 +21,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const url = interaction.option.getString('url');
+        const url = interaction.options.getString('url');
         const channel = interaction.member.voice.channel;
 
         if (!channel) {
@@ -32,19 +32,17 @@ module.exports = {
 
         if (!serverQueue) {
 
-            const existingConnection = getVoiceConnection(interaction.guild.id);
+            let connection = getVoiceConnection(interaction.guild.id);
 
-            if(existingConnection) {
-                const connection = existingConnection;
-            } else {
+            if(!connection) {
                 try{
-                    const connection = joinVoiceChannel({
+                    connection = joinVoiceChannel({
                         channelId: channel.id,
                         guildId: interaction.guild.id,
                         adapterCreator: interaction.guild.voiceAdapterCreator,
                     });
-                } catch (err) {
-                    return interaction.reply(err); 
+                } catch(err) {
+                    return interaction.reply(err);
                 }
             }
 
@@ -72,7 +70,7 @@ module.exports = {
             interaction.reply(`Add playlist to queue (${videos.length}songs)`);
 
             if (serverQueue.songs.length === videos.length) {
-                playNext(interaction.quild.id);
+                playNext(interaction.guild.id);
             }
         } else {
             serverQueue.songs.push({ url });

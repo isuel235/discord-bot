@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const {
     joinVoiceChannel,
+    getVoiceConnection,
     createAudioPlayer,
     createAudioResource,
     AudioPlayerStatus
@@ -30,11 +31,22 @@ module.exports = {
         let serverQueue = queue.get(interaction.guild.id);
 
         if (!serverQueue) {
-            const connection = joinVoiceChannel({
-                channelId: channel.id,
-                guildId: interaction.guild.id,
-                adapterCreator: interaction.guild.voiceAdapterCreator,
-            });
+
+            const existingConnection = getVoiceConnection(interaction.guild.id);
+
+            if(existingConnection) {
+                const connection = existingConnection;
+            } else {
+                try{
+                    const connection = joinVoiceChannel({
+                        channelId: channel.id,
+                        guildId: interaction.guild.id,
+                        adapterCreator: interaction.guild.voiceAdapterCreator,
+                    });
+                } catch (err) {
+                    return interaction.reply(err); 
+                }
+            }
 
             const player = createAudioPlayer();
 

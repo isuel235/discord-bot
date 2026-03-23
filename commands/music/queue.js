@@ -1,34 +1,29 @@
 const { SlashCommandBuilder } = require('discord.js');
-const queue = require('../../queue');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('queue')
-        .setDescription('Show current queue'),
+        .setDescription('Show music queue'),
 
     async execute(interaction) {
-        const serverQueue = queue.get(interaction.guild.id);
+        const player = interaction.client.manager.players.get(interaction.guild.id);
 
-        if(!serverQueue || serverQueue.songs.length === 0) {
-            return interaction.reply({
-                content: "Queue is empty.",
-                ephemeral: true
+        if (!player || !player.queue.current) {
+            return interaction.reply("No music playing.");
+        }
+
+        const current = player.queue.current;
+        const tracks = player.queue.tracks.slice(0, 10);
+
+        let desc = `🎵 Now Playing:\n${current.info.title}\n\n`;
+
+        if (tracks.length > 0) {
+            desc += "📜 Queue:\n";
+            tracks.forEach((t, i) => {
+                desc += `${i + 1}. ${t.info.title}\n`;
             });
         }
 
-        const songs = serverQueue.songs.slice(0, 10);
-
-        const list = songs
-            .map((song, i) => {
-                if(i === 0) return `Now : ${song.url}`;
-                return `${i}. ${song.url}`;
-            })
-            .join('\n');
-
-        const more = serverQueue.songs.length > 10
-            ? `\n.. more ${serverQueue.songs.length - 10} tracks`
-            : '';
-
-        interaction.reply(list + more);
+        await interaction.reply(desc);
     }
 };

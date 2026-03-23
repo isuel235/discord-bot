@@ -1,25 +1,22 @@
 const { SlashCommandBuilder } = require('discord.js');
-const queue = require('../../queue');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('loop')
-        .setDescription('repeat queue'),
+        .setDescription('Toggle queue loop'),
 
     async execute(interaction) {
-        const serverQueue = queue.get(interaction.guild.id);
+        const player = interaction.client.manager.players.get(interaction.guild.id);
 
-        if(!serverQueue) {
+        if (!player || !player.queue.current) {
             return interaction.reply({
                 content: "There is no track playing",
                 ephemeral: true
             });
         }
 
-        serverQueue.loop = !serverQueue.loop;
-        if(serverQueue.loop) {
-            serverQueue.repeat = false;
-        }
-        interaction.reply(`Loop ${serverQueue.loop ? "ON" : "OFF"}`);
+        player.setLoop(player.loop === "queue" ? "none" : "queue");
+
+        await interaction.reply(`Loop ${player.loop === "queue" ? "ON" : "OFF"}`);
     }
 };

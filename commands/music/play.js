@@ -1,14 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const {
-    joinVoiceChannel,
-    getVoiceConnection,
-    createAudioPlayer,
-    createAudioResource,
-    AudioPlayerStatus
-} = require('@discordjs/voice');
-const play = require('play-dl');
-
-const queue = require('../../queue');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -28,103 +18,37 @@ module.exports = {
             return interaction.reply("You are not in voice channel");
         }
 
-        let serverQueue = queue.get(interaction.guild.id);
+        const manager = interaction.client.manager;
 
-        if (!serverQueue) {
+        let player = manager.players.get(interaction.guild.id);
 
-            let connection = getVoiceConnection(interaction.guild.id);
+        if (!player) {
+            player = await manager.createPlayer({
+                guildId: interaction.guild.id,
+                voiceChannelId: channel.id,
+                textChannelId: interaction.channel.id,
+            });
 
-            if(!connection) {
-                try{
-                    connection = joinVoiceChannel({
-                        channelId: channel.id,
-                        guildId: interaction.guild.id,
-                        adapterCreator: interaction.guild.voiceAdapterCreator,
-                    });
-                } catch(err) {
-                    return interaction.reply(err);
-                }
-            }
-
-            const player = createAudioPlayer();
-
-            serverQueue = {
-                connection,
-                player,
-                songs:[],
-                loop: false,
-                repeat: false
-            };
-
-            queue.set(interaction.guild.id, serverQueue);
+            await player.connect();
         }
 
-        if (play.yt_validate(url) === 'playlist') {
-            const playlist = await play.playlist_info(url);
-            const videos = await playlist.all_videos();
+        const res = await manager.search({
+            query: url,
+            source: "ytsearch"
+        });
 
-            for (const video of videos) {
-                serverQueue.songs.push({ url: video.url });
-            }
+        if (!res.tracks.length) {
+            return interaction.reply("No results found.");
+        }
 
-            interaction.reply(`Add playlist to queue (${videos.length}songs)`);
+        const track = res.tracks[0];
 
-            if (serverQueue.songs.length === videos.length) {
-                playNext(interaction.guild.id);
-            }
-        } else {
-            serverQueue.songs.push({ url });
+        player.queue.add(track);
 
-            interaction.reply(`Add song to queue (${url})`);
+        await interaction.reply(`Added to queue: ${track.info.title}`);
 
-            if(serverQueue.songs.length === 1) {
-                playNext(interaction.guild.id);
-            }
+        if (!player.playing && !player.paused) {
+            player.play();
         }
     }
 };
-
-async function playNext(guildId) {
-    const serverQueue = queue.get(guildId);
-
-    if(!serverQueue || serverQueue.songs.length === 0) {
-        serverQueue?.connection.destroy();
-        queue.delete(guildId);
-        return;
-    }
-
-    const song = serverQueue.songs[0];
-
-    try {
-        const stream = await play.stream(song.url);
-
-        const resource = createAudioResource(stream.stream, {
-            inputType: stream.type,
-        });
-
-        serverQueue.connection.subscribe(serverQueue.player);
-        serverQueue.player.play(resource);
-        
-        console.log(`play : ${song.url}`);
-
-        serverQueue.player.once(AudioPlayerStatus.Idle, () => {
-            
-            if(serverQueue.repeat) {
-                playNext(guildId);
-                return;
-            }
-            
-            const finishedSong = serverQueue.songs.shift();
-            
-            if (serverQueue.loop && finishedSong) {
-                serverQueue.songs.push(finishedSong);
-            }
-
-            playNext(guildId);
-        });
-    } catch (err) {
-        console.log("error: ", err);
-        serverQueue.songs.shift();
-        playNext(guildId);
-    }
-}

@@ -2,18 +2,18 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('stop')
-        .setDescription('Stop music and clear queue'),
+        .setName('leave')
+        .setDescription('Leave voice channel'),
 
     async execute(interaction) {
         const player = interaction.client.manager.players.get(interaction.guild.id);
 
         if (!player) {
-            return interaction.reply("Nothing to stop.");
+            return interaction.reply("Not connected.");
         }
 
         player.destroy();
 
-        await interaction.reply("Stopped and disconnected.");
+        await interaction.reply("Disconnected.");
     }
 };

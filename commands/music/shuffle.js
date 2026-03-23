@@ -1,31 +1,24 @@
 const { SlashCommandBuilder } = require('discord.js');
-const queue = require('../../queue');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('shuffle')
-        .setDescription('Shuggle the queue'),
+        .setDescription('Shuffle queue'),
 
     async execute(interaction) {
-        const serverQueue = queue.get(interaction.guild.id);
-    
-        if (!serverQueue || serverQueue.songs.length <= 1) {
-            return interaction.reply({
-                content: "Need more track.",
-                ephemeral: true
-            });
+        const player = interaction.client.manager.players.get(interaction.guild.id);
+
+        if (!player || player.queue.tracks.length === 0) {
+            return interaction.reply("Queue is empty.");
         }
 
-        const current = serverQueue.songs[0];
-        const rest = serverQueue.songs.slice(1);
-
-        for (let i = rest.length - 1; i > 0; i--) {
+        // Fisher-Yates shuffle
+        for (let i = player.queue.tracks.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [rest[i], rest[j]] = [rest[j], rest[i]];
+            [player.queue.tracks[i], player.queue.tracks[j]] =
+                [player.queue.tracks[j], player.queue.tracks[i]];
         }
 
-        serverQueue.songs = [current, rest];
-
-        interaction.reply("Shuffled");
+        await interaction.reply("Queue shuffled.");
     }
 };

@@ -2,14 +2,31 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
 const { DISCORD_API, APPLICATION_ID, GUILD_ID, X_NAVER_CLIENT_ID, X_NAVER_CLIENT_SECRET} = require('./config.json');
+const { LavalinkManager } = require('lavalink-client')
 
 const client = new Client({ intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+	GatewayIntentBits.GuildVoiceStates
 ]});
 
+const manager = new LavalinkManager({
+	nodes: [
+		{
+			id: "main",
+			host: "127.0.0.1",
+			port: 2333,
+			authorization: "1234"
+		}
+	],
+	sendToShard: (guildId, payload) => {
+		const guild = client.guilds.cache.get(guildId);
+		if(guild) guild.shard.send(payload);
+	}
+});
 
+client.manager = manager;
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
@@ -40,5 +57,10 @@ for (const file of eventFiles) {
         client.on(event.name, (...args) => event.execute(...args));
     }
 }
+
+client.on("ready", ()=> {
+	console.log(`Logged in as ${client.user.tag}`);
+	manager.init(client.user.id);
+});
 
 client.login(DISCORD_API);

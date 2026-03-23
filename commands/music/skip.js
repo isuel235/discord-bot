@@ -1,23 +1,19 @@
 const { SlashCommandBuilder } = require('discord.js');
-const queue = require('../../queue');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('skip')
-        .setDescription('Skip current song'),
+        .setDescription('Skip current track'),
 
     async execute(interaction) {
-        const serverQueue = queue.get(interaction.guild.id);
+        const player = interaction.client.manager.players.get(interaction.guild.id);
 
-        if (!serverQueue) {
-            return interaction.reply({
-                content: "Queue is empty",
-                ephemeral: true
-            });
+        if (!player || !player.queue.current) {
+            return interaction.reply("No track playing.");
         }
 
-        serverQueue.player.stop();
+        player.skip();
 
-        interaction.reply("Skip");
+        await interaction.reply("Skipped.");
     }
 };
